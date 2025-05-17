@@ -30,11 +30,6 @@ const ReminderApp: React.FC = () => {
   
   useEffect(() => {
     (window as any).electronAPI.onReminderData((reminderData: ReminderData) => {
-      // Use custom message or random one
-      if (!reminderData.message) {
-        const messages = reminderData.type === 'blink' ? blinkMessages : postureMessages;
-        reminderData.message = messages[Math.floor(Math.random() * messages.length)];
-      }
       setData(reminderData);
       setIsHiding(false);
       

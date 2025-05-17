@@ -11,6 +11,21 @@ export class TwentyTwentyWindow {
   private countdownInterval: NodeJS.Timeout | null = null;
   private isClosing: boolean = false;
   
+  private messages = [
+    "Give them eyes a rest, champ 👀",
+    "Time to gaze into the distance 🌅",
+    "Look far, see far 🔭",
+    "Your eyes will thank you ✨",
+    "Take a visual vacation 🏖️",
+    "Time for some eye yoga 🧘",
+    "Let those peepers breathe 💨",
+    "Focus on the horizon 🌄",
+  ];
+  
+  private getRandomMessage(): string {
+    return this.messages[Math.floor(Math.random() * this.messages.length)];
+  }
+  
   show(onComplete: () => void, onCountdownUpdate?: (seconds: number) => void) {
     // Close existing windows
     this.windows.forEach(window => window.destroy());
@@ -31,6 +46,12 @@ export class TwentyTwentyWindow {
     
     // Get all displays
     const displays = screen.getAllDisplays();
+    
+    // Pre-determine the initial state to send to all windows
+    const initialState = {
+      countdown: 20,
+      message: this.getRandomMessage()
+    };
     
     // Create a window for each display
     displays.forEach((display, index) => {
@@ -75,10 +96,10 @@ export class TwentyTwentyWindow {
         // Don't remove from array here, let cleanup handle it
       });
       
-      // Send initial countdown for each window
+      // Send initial state for each window
       window.webContents.on('did-finish-load', () => {
         if (!window.isDestroyed()) {
-          window.webContents.send('update-countdown', 20);
+          window.webContents.send('initial-state', initialState);
         }
       });
       

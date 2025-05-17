@@ -15,9 +15,16 @@ const messages = [
 
 const TwentyTwentyApp: React.FC = () => {
   const [countdown, setCountdown] = useState(20);
-  const [message] = useState(() => messages[Math.floor(Math.random() * messages.length)]);
+  const [message, setMessage] = useState('');
   
   useEffect(() => {
+    // Listen for initial state
+    (window as any).electronAPI.onInitialState((state: { countdown: number; message: string }) => {
+      setCountdown(state.countdown);
+      setMessage(state.message);
+    });
+    
+    // Listen for countdown updates
     (window as any).electronAPI.onCountdownUpdate((newCountdown: number) => {
       setCountdown(newCountdown);
     });
