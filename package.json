@@ -1,0 +1,53 @@
+{
+  "name": "blinkaway",
+  "version": "1.0.0",
+  "description": "A macOS app to remind you to blink, fix posture, and follow the 20-20-20 rule",
+  "main": ".webpack/main/index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "build": "electron-forge make",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "dev": "ELECTRON_ENABLE_STACK_DUMPING=true ELECTRON_ENABLE_LOGGING=true NODE_ENV=development electron-forge start -- --inspect",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "author": "Leighton Tidwell",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron-forge/cli": "^7.5.0",
+    "@electron-forge/maker-deb": "^7.5.0",
+    "@electron-forge/maker-dmg": "^7.5.0",
+    "@electron-forge/maker-rpm": "^7.5.0",
+    "@electron-forge/maker-squirrel": "^7.5.0",
+    "@electron-forge/plugin-webpack": "^7.5.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "css-loader": "^6.8.1",
+    "electron": "^28.1.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.leightontidwell.blinkaway",
+    "productName": "BlinkAway",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns"
+    }
+  }
+}
