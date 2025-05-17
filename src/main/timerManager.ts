@@ -24,6 +24,7 @@ export class TimerManager {
   private reminderWindow: ReminderWindow;
   private twentyTwentyWindow: TwentyTwentyWindow;
   private isTwentyTwentyActive: boolean = false;
+  private manuallyResumedOutsideHours: boolean = false;
   
   constructor() {
     this.store = new Store<TimerState>({
@@ -187,9 +188,6 @@ export class TimerManager {
   private checkTimers() {
     if (!this.store.get('isEnabled')) return;
     
-    // Skip if outside working hours
-    if (!this.isWithinWorkingHours()) return;
-    
     // Skip all timer checks if 20-20-20 is active
     if (this.isTwentyTwentyActive) return;
     
@@ -257,6 +255,9 @@ export class TimerManager {
     this.stop();
     this.updateTrayTitle('💤');
     
+    // Reset manual resume flag when pausing
+    this.manuallyResumedOutsideHours = false;
+    
     // If minutes is provided, auto-resume after that time
     if (minutes) {
       setTimeout(() => {
@@ -268,6 +269,12 @@ export class TimerManager {
   
   resume() {
     this.store.set('isEnabled', true);
+    
+    // Check if resuming outside working hours
+    if (this.store.get('workingHoursEnabled') && !this.isWithinWorkingHours()) {
+      this.manuallyResumedOutsideHours = true;
+    }
+    
     this.start();
   }
   
@@ -439,11 +446,16 @@ export class TimerManager {
         this.store.set('isEnabled', true);
         this.start();
         this.updateTrayTitle();
+        
+        // Reset manual resume flag when entering working hours
+        this.manuallyResumedOutsideHours = false;
       } else if (!isWithinHours && isEnabled) {
-        // Auto-pause at end of working hours
-        this.store.set('isEnabled', false);
-        this.stop();
-        this.updateTrayTitle();
+        // Only auto-pause if not manually resumed
+        if (!this.manuallyResumedOutsideHours) {
+          this.store.set('isEnabled', false);
+          this.stop();
+          this.updateTrayTitle();
+        }
       }
     }
   }
