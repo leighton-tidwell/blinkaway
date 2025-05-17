@@ -2,7 +2,7 @@
   "name": "blinkaway",
   "version": "1.0.0",
   "description": "A macOS app to remind you to blink, fix posture, and follow the 20-20-20 rule",
-  "main": ".webpack/main/index.js",
+  "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
     "build": "electron-forge make",
