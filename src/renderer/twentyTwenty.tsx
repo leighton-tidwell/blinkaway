@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/twentyTwenty.css';
 
-const messages = [
-  "Give them eyes a rest, champ 👀",
-  "Time to gaze into the distance 🌅",
-  "Look far, see far 🔭",
-  "Your eyes will thank you ✨",
-  "Take a visual vacation 🏖️",
-  "Time for some eye yoga 🧘",
-  "Let those peepers breathe 💨",
-  "Focus on the horizon 🌄",
-];
+// Not currently used - messages come from main process
+// const messages = [
+//   "Give them eyes a rest, champ 👀",
+//   "Time to gaze into the distance 🌅",
+//   "Look far, see far 🔭",
+//   "Your eyes will thank you ✨",
+//   "Take a visual vacation 🏖️",
+//   "Time for some eye yoga 🧘",
+//   "Let those peepers breathe 💨",
+//   "Focus on the horizon 🌄",
+// ];
 
 const TwentyTwentyApp: React.FC = () => {
   const [countdown, setCountdown] = useState(20);

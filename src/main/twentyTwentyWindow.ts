@@ -56,7 +56,6 @@ export class TwentyTwentyWindow {
     // Create a window for each display
     displays.forEach((display, index) => {
       const { bounds } = display;
-      const isPrimary = display.primary;
       
       const window = new BrowserWindow({
         width: bounds.width,

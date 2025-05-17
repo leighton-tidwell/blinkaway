@@ -1,4 +1,4 @@
-import { ipcMain, Notification, Tray } from 'electron';
+import { ipcMain, Tray, app } from 'electron';
 import Store from 'electron-store';
 import { ReminderWindow } from './reminderWindow';
 import { TwentyTwentyWindow } from './twentyTwentyWindow';
@@ -91,8 +91,6 @@ export class TimerManager {
     const nextTwentyTwenty = this.store.get('nextTwentyTwenty');
     const nextBlink = this.store.get('nextBlink');
     const nextPosture = this.store.get('nextPosture');
-    const blinkInterval = this.store.get('blinkInterval') * 60 * 1000;
-    const postureInterval = this.store.get('postureInterval') * 60 * 1000;
     
     // Define a buffer time (1 minute) to consider as overlap
     const bufferTime = 60 * 1000;
@@ -280,7 +278,7 @@ export class TimerManager {
     const now = new Date();
     const [startHour, startMinute] = this.store.get('workingHoursStart').split(':').map(Number);
     
-    let startTime = new Date();
+    const startTime = new Date();
     startTime.setHours(startHour, startMinute, 0, 0);
     
     // If start time has already passed today, set it for tomorrow
@@ -401,8 +399,7 @@ export class TimerManager {
       });
       
       // Handle launch at login setting
-      if (settings.hasOwnProperty('launchAtLogin')) {
-        const { app } = require('electron');
+      if ('launchAtLogin' in settings) {
         app.setLoginItemSettings({
           openAtLogin: settings.launchAtLogin!,
           path: app.getPath('exe'),
@@ -432,7 +429,7 @@ export class TimerManager {
         this.preventTimerOverlaps();
       }
       
-      if (settings.hasOwnProperty('isEnabled')) {
+      if ('isEnabled' in settings) {
         if (settings.isEnabled) {
           this.start();
         } else {

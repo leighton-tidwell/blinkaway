@@ -15,7 +15,7 @@ export class NotificationWindow {
     }
     
     const display = screen.getPrimaryDisplay();
-    const { width, height } = display.workAreaSize;
+    const { width } = display.workAreaSize;
     const { x: screenX, y: screenY } = display.bounds;
     
     this.window = new BrowserWindow({

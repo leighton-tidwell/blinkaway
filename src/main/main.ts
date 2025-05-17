@@ -1,6 +1,5 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, Notification } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron';
 import { join } from 'path';
-import { format } from 'url';
 import { TimerManager } from './timerManager';
 import Store from 'electron-store';
 
@@ -58,7 +57,7 @@ const updateTrayMenu = (): void => {
       },
     },
     {
-      type: 'separator',
+      type: 'separator' as const,
     },
   ];
   
@@ -133,7 +132,7 @@ const updateTrayMenu = (): void => {
   
   menuItems.push(
     {
-      type: 'separator',
+      type: 'separator' as const,
     },
     {
       label: 'Debug: Trigger 20-20-20',
@@ -168,7 +167,7 @@ const updateTrayMenu = (): void => {
       },
     },
     {
-      type: 'separator',
+      type: 'separator' as const,
     },
     {
       label: 'Quit',
@@ -212,9 +211,9 @@ const createTray = (): void => {
   
   updateTrayMenu();
   
-  tray.on('click', () => {
+  tray!.on('click', () => {
     // Do nothing on click - only show menu
-    tray.popUpContextMenu();
+    tray!.popUpContextMenu();
   });
 };
 
@@ -236,7 +235,7 @@ app.whenReady().then(() => {
     
     // Set up auto-launch
     const store = new Store();
-    const launchAtLogin = store.get('launchAtLogin', false);
+    const launchAtLogin = store.get('launchAtLogin', false) as boolean;
     app.setLoginItemSettings({
       openAtLogin: launchAtLogin,
       path: app.getPath('exe'),
