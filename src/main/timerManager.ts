@@ -15,6 +15,7 @@ interface TimerState {
   workingHoursStart: string; // Format: "HH:MM"
   workingHoursEnd: string; // Format: "HH:MM"
   manuallyResumedOutsideHours: boolean;
+  launchAtLogin: boolean;
 }
 
 export class TimerManager {
@@ -40,6 +41,7 @@ export class TimerManager {
         workingHoursStart: "09:00",
         workingHoursEnd: "17:00",
         manuallyResumedOutsideHours: false,
+        launchAtLogin: false,
       },
     });
     
@@ -397,6 +399,16 @@ export class TimerManager {
       Object.keys(settings).forEach(key => {
         this.store.set(key as keyof TimerState, settings[key as keyof TimerState]);
       });
+      
+      // Handle launch at login setting
+      if (settings.hasOwnProperty('launchAtLogin')) {
+        const { app } = require('electron');
+        app.setLoginItemSettings({
+          openAtLogin: settings.launchAtLogin!,
+          path: app.getPath('exe'),
+          args: []
+        });
+      }
       
       // If intervals have changed, reset timers with proper offsets
       if (settings.twentyTwentyInterval || settings.blinkInterval || settings.postureInterval) {

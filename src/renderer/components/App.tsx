@@ -9,6 +9,7 @@ interface ReminderSettings {
   workingHoursEnabled: boolean;
   workingHoursStart: string;
   workingHoursEnd: string;
+  launchAtLogin: boolean;
 }
 
 interface SettingSliderProps {
@@ -77,6 +78,10 @@ const App: React.FC = () => {
     blinkInterval: 5,
     postureInterval: 30,
     isEnabled: true,
+    workingHoursEnabled: false,
+    workingHoursStart: "09:00",
+    workingHoursEnd: "17:00",
+    launchAtLogin: false,
   });
   
   useEffect(() => {
@@ -85,7 +90,7 @@ const App: React.FC = () => {
     });
   }, []);
 
-  const updateSetting = (key: keyof ReminderSettings, value: number) => {
+  const updateSetting = (key: keyof ReminderSettings, value: number | boolean | string) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     (window as any).electronAPI.updateReminderSettings({ [key]: value });
@@ -176,6 +181,21 @@ const App: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+        
+        <div className="startup-section">
+          <h2 className="section-title">System Settings</h2>
+          <div className="startup-card">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={settings.launchAtLogin}
+                onChange={(e) => updateSetting('launchAtLogin', e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+              <span className="toggle-text">Start BlinkAway with system</span>
+            </label>
           </div>
         </div>
         

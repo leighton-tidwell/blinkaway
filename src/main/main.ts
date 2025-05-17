@@ -2,6 +2,7 @@ import { app, BrowserWindow, Tray, Menu, nativeImage, Notification } from 'elect
 import { join } from 'path';
 import { format } from 'url';
 import { TimerManager } from './timerManager';
+import Store from 'electron-store';
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -232,6 +233,15 @@ app.whenReady().then(() => {
     timerManager.start();
     console.log('Timer manager started');
     updateTrayMenu(); // Update menu after timerManager is created
+    
+    // Set up auto-launch
+    const store = new Store();
+    const launchAtLogin = store.get('launchAtLogin', false);
+    app.setLoginItemSettings({
+      openAtLogin: launchAtLogin,
+      path: app.getPath('exe'),
+      args: []
+    });
   } catch (error) {
     console.error('Error with timer manager:', error);
   }
