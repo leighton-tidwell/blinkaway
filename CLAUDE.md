@@ -4,38 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Essential Commands
 
-- `npm run lint`: Run ESLint to check code style
-- `npm run typecheck`: Run TypeScript type checking
-- `npm run dev`: Start development server with debugging enabled
-- `npm start`: Start the application (production mode)
-- `npm run build`: Build the production app
-- `npm run package`: Create packaged app
-- `npm run make`: Create distributable files (DMG for macOS)
+Development:
+- `npm install`: Install all dependencies
+- `npm run dev`: Start development server with debugging enabled (includes stack dumping and logging)
+- `npm start`: Start the application in production mode
+
+Code Quality:
+- `npm run lint`: Run ESLint to check code style (uses TypeScript ESLint)
+- `npm run typecheck`: Run TypeScript type checking with no emit
+
+Build & Distribution:
+- `npm run build`: Build the production app and create DMG
+- `npm run package`: Create packaged app without distributables
+- `npm run make`: Create distributable files for all platforms (DMG, Squirrel, DEB, RPM)
 
 ## Architecture Overview
 
-BlinkAway is an Electron app with separate main and renderer processes:
+BlinkAway is an Electron application that helps users maintain healthy screen habits through reminders for blinking, posture, and the 20-20-20 rule.
 
-**Main Process Architecture:**
-- `src/main/main.ts`: Entry point, manages Tray, Menu, and window lifecycle
-- `src/main/timerManager.ts`: Core timer logic, manages all reminder intervals and state persistence using electron-store
-- `src/main/notificationWindow.ts`: Creates floating notification windows
-- `src/main/reminderWindow.ts`: Handles blink and posture reminder windows
-- `src/main/twentyTwentyWindow.ts`: Manages fullscreen 20-20-20 break windows
+**Core Architecture Components:**
 
-**Renderer Process Architecture:**
-- Multi-window setup with Webpack entry points for each window type
-- React components render in separate windows: main settings, notifications, reminders, and 20-20-20
-- IPC communication between main and renderer processes for state management
+1. **Multi-Process Design**:
+   - Main process handles all business logic, timer management, and window lifecycle
+   - Renderer processes only handle UI rendering and user interactions
+   - Communication via Electron IPC with typed channels
 
-**Build Configuration:**
-- Uses Electron Forge with Webpack plugin
-- Multiple renderer entry points defined in `forge.config.js`
-- TypeScript for both main and renderer processes
+2. **Window System**:
+   - Main window: Settings and controls interface
+   - Notification window: Floating translucent popups for quick reminders
+   - Reminder window: Modal dialogs for blink and posture checks
+   - Twenty-twenty window: Fullscreen overlay for 20-20-20 rule breaks
 
-## Key Architectural Patterns
+3. **Timer Management**:
+   - `timerManager.ts` centralizes all timer logic with configurable intervals
+   - Uses electron-store for persistence across app restarts
+   - Updates menu bar tray icon with real-time countdown
 
-1. **State Management**: Uses electron-store for persistent settings and timer states
-2. **Window Management**: Each notification type has its own BrowserWindow class
-3. **IPC Communication**: Main process handles all timer logic, renderers only display UI
-4. **Menu Bar Integration**: Tray icon shows countdown to next break
+**Webpack Configuration:**
+- Multiple entry points defined in `forge.config.js` for each window type
+- Separate preload scripts for each window to maintain security isolation
+- TypeScript loader for both main and renderer processes
+
+## Key Technical Patterns
+
+1. **State Persistence**: All settings and timer states persisted via electron-store
+2. **Preload Scripts**: Each window type has dedicated preload script for secure IPC
+3. **Menu Bar App**: Lives primarily in macOS menu bar with tray icon
+4. **Window Positioning**: Notification windows positioned strategically on screen
+5. **React Components**: Renderer UI built with React functional components
