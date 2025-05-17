@@ -14,6 +14,7 @@ interface TimerState {
   workingHoursEnabled: boolean;
   workingHoursStart: string; // Format: "HH:MM"
   workingHoursEnd: string; // Format: "HH:MM"
+  manuallyResumedOutsideHours: boolean;
 }
 
 export class TimerManager {
@@ -24,7 +25,6 @@ export class TimerManager {
   private reminderWindow: ReminderWindow;
   private twentyTwentyWindow: TwentyTwentyWindow;
   private isTwentyTwentyActive: boolean = false;
-  private manuallyResumedOutsideHours: boolean = false;
   
   constructor() {
     this.store = new Store<TimerState>({
@@ -39,6 +39,7 @@ export class TimerManager {
         workingHoursEnabled: false,
         workingHoursStart: "09:00",
         workingHoursEnd: "17:00",
+        manuallyResumedOutsideHours: false,
       },
     });
     
@@ -253,10 +254,10 @@ export class TimerManager {
   pause(minutes?: number) {
     this.store.set('isEnabled', false);
     this.stop();
-    this.updateTrayTitle('💤');
+    this.updateTrayTitle();
     
     // Reset manual resume flag when pausing
-    this.manuallyResumedOutsideHours = false;
+    this.store.set('manuallyResumedOutsideHours', false);
     
     // If minutes is provided, auto-resume after that time
     if (minutes) {
@@ -267,12 +268,38 @@ export class TimerManager {
     }
   }
   
+  pauseUntilWorkStarts() {
+    this.store.set('isEnabled', false);
+    this.stop();
+    this.updateTrayTitle();
+    this.store.set('manuallyResumedOutsideHours', false);
+    
+    // Calculate time until work starts
+    const now = new Date();
+    const [startHour, startMinute] = this.store.get('workingHoursStart').split(':').map(Number);
+    
+    let startTime = new Date();
+    startTime.setHours(startHour, startMinute, 0, 0);
+    
+    // If start time has already passed today, set it for tomorrow
+    if (startTime <= now) {
+      startTime.setDate(startTime.getDate() + 1);
+    }
+    
+    const msUntilStart = startTime.getTime() - now.getTime();
+    
+    setTimeout(() => {
+      this.store.set('isEnabled', true);
+      this.start();
+    }, msUntilStart);
+  }
+  
   resume() {
     this.store.set('isEnabled', true);
     
     // Check if resuming outside working hours
     if (this.store.get('workingHoursEnabled') && !this.isWithinWorkingHours()) {
-      this.manuallyResumedOutsideHours = true;
+      this.store.set('manuallyResumedOutsideHours', true);
     }
     
     this.start();
@@ -335,6 +362,14 @@ export class TimerManager {
   
   isPaused(): boolean {
     return !this.store.get('isEnabled');
+  }
+  
+  hasWorkingHoursEnabled(): boolean {
+    return this.store.get('workingHoursEnabled');
+  }
+  
+  isCurrentlyWithinWorkingHours(): boolean {
+    return this.isWithinWorkingHours();
   }
   
   private setupIPCHandlers() {
@@ -448,10 +483,10 @@ export class TimerManager {
         this.updateTrayTitle();
         
         // Reset manual resume flag when entering working hours
-        this.manuallyResumedOutsideHours = false;
+        this.store.set('manuallyResumedOutsideHours', false);
       } else if (!isWithinHours && isEnabled) {
         // Only auto-pause if not manually resumed
-        if (!this.manuallyResumedOutsideHours) {
+        if (!this.store.get('manuallyResumedOutsideHours')) {
           this.store.set('isEnabled', false);
           this.stop();
           this.updateTrayTitle();

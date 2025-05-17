@@ -62,6 +62,10 @@ const updateTrayMenu = (): void => {
   ];
   
   if (!isPaused) {
+    // Get actual working hours status - default to false for both
+    const isWorkingHoursEnabled = timerManager ? timerManager.hasWorkingHoursEnabled() : false;
+    const isWithinWorkingHours = timerManager ? timerManager.isCurrentlyWithinWorkingHours() : false;
+    
     menuItems.push(
       {
         label: 'Pause for 5 minutes',
@@ -100,6 +104,20 @@ const updateTrayMenu = (): void => {
         },
       }
     );
+    
+    // Add "Pause until work starts" option if working hours are enabled and we're outside working hours
+    console.log('Menu debug - Working hours enabled:', isWorkingHoursEnabled, 'Within hours:', isWithinWorkingHours);
+    if (isWorkingHoursEnabled && !isWithinWorkingHours) {
+      menuItems.push({
+        label: 'Pause until work starts',
+        click: () => {
+          if (timerManager) {
+            timerManager.pauseUntilWorkStarts();
+            updateTrayMenu();
+          }
+        },
+      });
+    }
   } else {
     menuItems.push({
       label: 'Resume',
