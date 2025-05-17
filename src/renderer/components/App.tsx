@@ -6,6 +6,9 @@ interface ReminderSettings {
   blinkInterval: number;
   postureInterval: number;
   isEnabled: boolean;
+  workingHoursEnabled: boolean;
+  workingHoursStart: string;
+  workingHoursEnd: string;
 }
 
 interface SettingSliderProps {
@@ -135,6 +138,45 @@ const App: React.FC = () => {
             color="#FF9500"
             onChange={(value) => updateSetting('postureInterval', value)}
           />
+        </div>
+        
+        <div className="working-hours-section">
+          <h2 className="section-title">Working Hours</h2>
+          <div className="working-hours-card">
+            <div className="working-hours-header">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={settings.workingHoursEnabled}
+                  onChange={(e) => updateSetting('workingHoursEnabled', e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+                <span className="toggle-text">Auto-pause outside working hours</span>
+              </label>
+            </div>
+            {settings.workingHoursEnabled && (
+              <div className="working-hours-times">
+                <div className="time-picker">
+                  <label>Start Time</label>
+                  <input
+                    type="time"
+                    value={settings.workingHoursStart}
+                    onChange={(e) => updateSetting('workingHoursStart', e.target.value)}
+                    className="time-input"
+                  />
+                </div>
+                <div className="time-picker">
+                  <label>End Time</label>
+                  <input
+                    type="time"
+                    value={settings.workingHoursEnd}
+                    onChange={(e) => updateSetting('workingHoursEnd', e.target.value)}
+                    className="time-input"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="footer">

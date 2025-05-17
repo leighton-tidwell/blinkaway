@@ -11,6 +11,9 @@ interface TimerState {
   nextTwentyTwenty: number;
   nextBlink: number;
   nextPosture: number;
+  workingHoursEnabled: boolean;
+  workingHoursStart: string; // Format: "HH:MM"
+  workingHoursEnd: string; // Format: "HH:MM"
 }
 
 export class TimerManager {
@@ -32,6 +35,9 @@ export class TimerManager {
         nextTwentyTwenty: Date.now() + 20 * 60 * 1000,
         nextBlink: Date.now() + 5 * 60 * 1000,
         nextPosture: Date.now() + 30 * 60 * 1000,
+        workingHoursEnabled: false,
+        workingHoursStart: "09:00",
+        workingHoursEnd: "17:00",
       },
     });
     
@@ -41,6 +47,9 @@ export class TimerManager {
     
     // Initialize times with proper offsets if they're in the past
     this.initializeTimersWithOffsets();
+    
+    // Start working hours checker
+    this.startWorkingHoursChecker();
   }
   
   private initializeTimersWithOffsets() {
@@ -151,7 +160,12 @@ export class TimerManager {
     }
     
     if (!this.store.get('isEnabled')) {
-      this.tray.setTitle('💤');
+      // Check if we're outside working hours to show appropriate icon
+      if (this.store.get('workingHoursEnabled') && !this.isWithinWorkingHours()) {
+        this.tray.setTitle('🌙');
+      } else {
+        this.tray.setTitle('💤');
+      }
       return;
     }
     
@@ -172,6 +186,9 @@ export class TimerManager {
   
   private checkTimers() {
     if (!this.store.get('isEnabled')) return;
+    
+    // Skip if outside working hours
+    if (!this.isWithinWorkingHours()) return;
     
     // Skip all timer checks if 20-20-20 is active
     if (this.isTwentyTwentyActive) return;
@@ -376,5 +393,58 @@ export class TimerManager {
     ipcMain.handle('get-reminder-settings', () => {
       return this.store.store;
     });
+  }
+  
+  private isWithinWorkingHours(): boolean {
+    if (!this.store.get('workingHoursEnabled')) {
+      return true; // If working hours are disabled, always consider it working time
+    }
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute; // Convert to minutes since midnight
+    
+    const [startHour, startMinute] = this.store.get('workingHoursStart').split(':').map(Number);
+    const [endHour, endMinute] = this.store.get('workingHoursEnd').split(':').map(Number);
+    
+    const startTime = startHour * 60 + startMinute;
+    const endTime = endHour * 60 + endMinute;
+    
+    // Handle cases where end time is before start time (e.g., night shift)
+    if (endTime < startTime) {
+      return currentTime >= startTime || currentTime < endTime;
+    }
+    
+    return currentTime >= startTime && currentTime < endTime;
+  }
+  
+  private startWorkingHoursChecker() {
+    // Check immediately on startup
+    this.checkWorkingHours();
+    
+    // Then check every minute
+    setInterval(() => {
+      this.checkWorkingHours();
+    }, 60 * 1000); // Check every minute
+  }
+  
+  private checkWorkingHours() {
+    const isEnabled = this.store.get('isEnabled');
+    const isWithinHours = this.isWithinWorkingHours();
+    
+    if (this.store.get('workingHoursEnabled')) {
+      if (isWithinHours && !isEnabled) {
+        // Auto-resume at start of working hours
+        this.store.set('isEnabled', true);
+        this.start();
+        this.updateTrayTitle();
+      } else if (!isWithinHours && isEnabled) {
+        // Auto-pause at end of working hours
+        this.store.set('isEnabled', false);
+        this.stop();
+        this.updateTrayTitle();
+      }
+    }
   }
 }
