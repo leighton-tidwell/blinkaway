@@ -39,16 +39,62 @@ export class TimerManager {
     this.twentyTwentyWindow = new TwentyTwentyWindow();
     this.setupIPCHandlers();
     
-    // Initialize times if they're in the past
+    // Initialize times with proper offsets if they're in the past
+    this.initializeTimersWithOffsets();
+  }
+  
+  private initializeTimersWithOffsets() {
     const now = Date.now();
+    const twentyTwentyInterval = this.store.get('twentyTwentyInterval') * 60 * 1000;
+    const blinkInterval = this.store.get('blinkInterval') * 60 * 1000;
+    const postureInterval = this.store.get('postureInterval') * 60 * 1000;
+    
+    // Calculate offsets to prevent overlaps
+    // Blink timer gets a 1-minute offset
+    const blinkOffset = 60 * 1000; // 1 minute
+    // Posture timer gets a 2-minute offset
+    const postureOffset = 2 * 60 * 1000; // 2 minutes
+    
+    // Initialize or reset timers if they're in the past
     if (this.store.get('nextTwentyTwenty') < now) {
-      this.store.set('nextTwentyTwenty', now + this.store.get('twentyTwentyInterval') * 60 * 1000);
+      this.store.set('nextTwentyTwenty', now + twentyTwentyInterval);
     }
+    
     if (this.store.get('nextBlink') < now) {
-      this.store.set('nextBlink', now + this.store.get('blinkInterval') * 60 * 1000);
+      // Add offset to blink timer to avoid overlap with 20-20-20
+      this.store.set('nextBlink', now + blinkInterval + blinkOffset);
     }
+    
     if (this.store.get('nextPosture') < now) {
-      this.store.set('nextPosture', now + this.store.get('postureInterval') * 60 * 1000);
+      // Add offset to posture timer to avoid overlap with both other timers
+      this.store.set('nextPosture', now + postureInterval + postureOffset);
+    }
+    
+    // Check if any timers would overlap and adjust them
+    this.preventTimerOverlaps();
+  }
+  
+  private preventTimerOverlaps() {
+    const nextTwentyTwenty = this.store.get('nextTwentyTwenty');
+    const nextBlink = this.store.get('nextBlink');
+    const nextPosture = this.store.get('nextPosture');
+    const blinkInterval = this.store.get('blinkInterval') * 60 * 1000;
+    const postureInterval = this.store.get('postureInterval') * 60 * 1000;
+    
+    // Define a buffer time (1 minute) to consider as overlap
+    const bufferTime = 60 * 1000;
+    
+    // Check if blink timer is too close to 20-20-20 timer
+    if (Math.abs(nextBlink - nextTwentyTwenty) < bufferTime) {
+      // Move blink timer forward by 1 minute
+      this.store.set('nextBlink', nextBlink + bufferTime);
+    }
+    
+    // Check if posture timer is too close to either timer
+    if (Math.abs(nextPosture - nextTwentyTwenty) < bufferTime || 
+        Math.abs(nextPosture - nextBlink) < bufferTime) {
+      // Move posture timer forward by 2 minutes
+      this.store.set('nextPosture', nextPosture + 2 * bufferTime);
     }
   }
   
@@ -157,14 +203,33 @@ export class TimerManager {
     // Check if it's time for blink reminder
     if (now >= nextBlink) {
       const interval = this.store.get('blinkInterval') * 60 * 1000;
-      this.store.set('nextBlink', now + interval);
+      let newNextBlink = now + interval;
+      
+      // Check if new blink time would overlap with next 20-20-20
+      const nextTwentyTime = this.store.get('nextTwentyTwenty');
+      if (Math.abs(newNextBlink - nextTwentyTime) < 60 * 1000) {
+        newNextBlink += 60 * 1000; // Add 1 minute offset
+      }
+      
+      this.store.set('nextBlink', newNextBlink);
       this.reminderWindow.show('blink', '');
     }
     
     // Check if it's time for posture reminder
     if (now >= nextPosture) {
       const interval = this.store.get('postureInterval') * 60 * 1000;
-      this.store.set('nextPosture', now + interval);
+      let newNextPosture = now + interval;
+      
+      // Check if new posture time would overlap with other timers
+      const nextTwentyTime = this.store.get('nextTwentyTwenty');
+      const nextBlinkTime = this.store.get('nextBlink');
+      
+      if (Math.abs(newNextPosture - nextTwentyTime) < 60 * 1000 || 
+          Math.abs(newNextPosture - nextBlinkTime) < 60 * 1000) {
+        newNextPosture += 2 * 60 * 1000; // Add 2 minute offset
+      }
+      
+      this.store.set('nextPosture', newNextPosture);
       this.reminderWindow.show('posture', '');
     }
   }
@@ -209,13 +274,33 @@ export class TimerManager {
   triggerBlink() {
     const interval = this.store.get('blinkInterval') * 60 * 1000;
     this.reminderWindow.show('blink', '');
-    this.store.set('nextBlink', Date.now() + interval);
+    
+    let newNextBlink = Date.now() + interval;
+    const nextTwentyTime = this.store.get('nextTwentyTwenty');
+    
+    // Check if new blink time would overlap with next 20-20-20
+    if (Math.abs(newNextBlink - nextTwentyTime) < 60 * 1000) {
+      newNextBlink += 60 * 1000; // Add 1 minute offset
+    }
+    
+    this.store.set('nextBlink', newNextBlink);
   }
   
   triggerPosture() {
     const interval = this.store.get('postureInterval') * 60 * 1000;
     this.reminderWindow.show('posture', '');
-    this.store.set('nextPosture', Date.now() + interval);
+    
+    let newNextPosture = Date.now() + interval;
+    const nextTwentyTime = this.store.get('nextTwentyTwenty');
+    const nextBlinkTime = this.store.get('nextBlink');
+    
+    // Check if new posture time would overlap with other timers
+    if (Math.abs(newNextPosture - nextTwentyTime) < 60 * 1000 || 
+        Math.abs(newNextPosture - nextBlinkTime) < 60 * 1000) {
+      newNextPosture += 2 * 60 * 1000; // Add 2 minute offset
+    }
+    
+    this.store.set('nextPosture', newNextPosture);
   }
   
   skipToLastSeconds(seconds: number) {
@@ -253,6 +338,28 @@ export class TimerManager {
       Object.keys(settings).forEach(key => {
         this.store.set(key as keyof TimerState, settings[key as keyof TimerState]);
       });
+      
+      // If intervals have changed, reset timers with proper offsets
+      if (settings.twentyTwentyInterval || settings.blinkInterval || settings.postureInterval) {
+        const now = Date.now();
+        
+        if (settings.twentyTwentyInterval) {
+          this.store.set('nextTwentyTwenty', now + settings.twentyTwentyInterval * 60 * 1000);
+        }
+        
+        if (settings.blinkInterval) {
+          // Add 1-minute offset to blink timer
+          this.store.set('nextBlink', now + settings.blinkInterval * 60 * 1000 + 60 * 1000);
+        }
+        
+        if (settings.postureInterval) {
+          // Add 2-minute offset to posture timer
+          this.store.set('nextPosture', now + settings.postureInterval * 60 * 1000 + 2 * 60 * 1000);
+        }
+        
+        // Prevent any overlaps after updating
+        this.preventTimerOverlaps();
+      }
       
       if (settings.hasOwnProperty('isEnabled')) {
         if (settings.isEnabled) {

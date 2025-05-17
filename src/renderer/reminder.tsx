@@ -37,13 +37,17 @@ const ReminderApp: React.FC = () => {
       }
       setData(reminderData);
       setIsHiding(false);
-      setTimeout(() => setIsVisible(true), 50);
       
-      // Start exit animation after 3 seconds
+      // Small delay to allow DOM to update before showing
+      requestAnimationFrame(() => {
+        setTimeout(() => setIsVisible(true), 100);
+      });
+      
+      // Start exit animation after 5 seconds
       setTimeout(() => {
         setIsHiding(true);
         setIsVisible(false);
-      }, 3000);
+      }, 5000);
     });
   }, []);
   

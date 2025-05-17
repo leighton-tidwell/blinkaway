@@ -13,19 +13,13 @@ export class ReminderWindow {
     }
     
     const display = screen.getPrimaryDisplay();
-    const { width, height } = display.workAreaSize;
-    
-    // Center the window - make it larger
-    const windowWidth = 500;
-    const windowHeight = 180;
-    const x = Math.round((width - windowWidth) / 2);
-    const y = Math.round((height - windowHeight) / 2);
+    const { width, height } = display.bounds;
     
     this.window = new BrowserWindow({
-      width: windowWidth,
-      height: windowHeight,
-      x,
-      y,
+      width,
+      height,
+      x: 0,
+      y: 0,
       frame: false,
       transparent: true,
       alwaysOnTop: true,
@@ -52,19 +46,21 @@ export class ReminderWindow {
     
     this.window.webContents.on('did-finish-load', () => {
       this.window?.webContents.send('reminder-data', { type, message });
+      // Show window after content loads to prevent glitchy animation
+      setTimeout(() => {
+        this.window?.showInactive();
+      }, 100);
     });
     
     this.window.on('closed', () => {
       this.window = null;
     });
     
-    this.window.showInactive();
-    
-    // Auto close after 3.5 seconds (to match the animation timing)
+    // Auto close after 6 seconds (5 seconds display + 1 second for animations)
     setTimeout(() => {
       if (this.window) {
         this.window.close();
       }
-    }, 3500);
+    }, 6000);
   }
 }
